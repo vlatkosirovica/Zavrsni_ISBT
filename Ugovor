@@ -1,0 +1,55 @@
+// SPDX-License-Identifier: GPL-3.0
+pragma solidity ^0.8.0;
+
+contract SimpleToken {
+    string public name = "Simple Token";
+    string public symbol = "ST";
+    uint8 public decimals = 18;
+    uint256 public totalSupply;
+    address public owner;
+
+    mapping (address => uint256) public balances;
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Mint(address indexed to, uint256 value);
+    event Burn(address indexed from, uint256 value);
+
+    constructor(uint256 initialSupply) public {
+        totalSupply = initialSupply;
+        balances[msg.sender] = totalSupply;
+        owner = msg.sender;
+    }
+
+    function transfer(address recipient, uint256 amount) public returns (bool) {
+        require(balances[msg.sender] >= amount, "Insufficient balance");
+        require(balances[recipient] + amount >= balances[recipient], "Overflow");
+
+        balances[msg.sender] -= amount;
+        balances[recipient] += amount;
+        emit Transfer(msg.sender, recipient, amount);
+        return true;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return balances[account];
+    }
+
+    function mint(address recipient, uint256 amount) public onlyOwner {
+        require(amount > 0, "Invalid amount");
+        totalSupply += amount;
+        balances[recipient] += amount;
+        emit Mint(recipient, amount);
+    }
+
+    function burn(address account, uint256 amount) public onlyOwner {
+        require(amount > 0, "Invalid amount");
+        require(balances[account] >= amount, "Insufficient balance");
+        totalSupply -= amount;
+        balances[account] -= amount;
+        emit Burn(account, amount);
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner can perform this action");
+        _;
+    }
+}
